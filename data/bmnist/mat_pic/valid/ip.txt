@@ -1,0 +1,10 @@
+data/bmnist/mat_pic/valid/0,50
+data/bmnist/mat_pic/valid/1,50
+data/bmnist/mat_pic/valid/2,50
+data/bmnist/mat_pic/valid/3,50
+data/bmnist/mat_pic/valid/4,50
+data/bmnist/mat_pic/valid/5,50
+data/bmnist/mat_pic/valid/6,50
+data/bmnist/mat_pic/valid/7,50
+data/bmnist/mat_pic/valid/8,50
+data/bmnist/mat_pic/valid/9,50

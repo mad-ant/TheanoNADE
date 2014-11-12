@@ -142,4 +142,4 @@ def trainNADE(src_folder, tgt_folder, batch_size=20, n_hid=40, learning_rate=0.1
     da.save_matrices(tgt_folder, "final")
 
 
-trainNADE("../data/bmnist/", "../result/bmnist/", batch_size=20, n_hid=500, learning_rate=0.1, training_epochs=20, gen_data=True, tied=True)
+trainNADE("data/bmnist/", "result/bmnist/", batch_size=20, n_hid=500, learning_rate=0.1, training_epochs=20, gen_data=True, tied=True)
