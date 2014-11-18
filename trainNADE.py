@@ -7,7 +7,6 @@ import numpy as np
 
 import theano
 import theano.tensor as T
-from theano.tensor.shared_randomstreams import RandomStreams
 
 import NNUtil
 import NADE
@@ -50,10 +49,7 @@ def trainNADE(src_folder, tgt_folder, batch_size=20, n_hid=40, learning_rate=0.1
     x = T.matrix('x')
     l_rate = T.fscalar()
 
-    rng = np.random.RandomState(123)
-    theano_rng = RandomStreams(rng.randint(2 ** 30))
-
-    da = NADE.NADE(numpy_rng=rng, theano_rng=theano_rng, l_rate=l_rate, input=x, n_visible=n_vis, n_hidden=n_hid, tied=tied)
+    da = NADE.NADE(random_seed=1234, l_rate=l_rate, input=x, n_visible=n_vis, n_hidden=n_hid, tied=tied)
 
     start_time = time.clock()
 
