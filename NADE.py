@@ -5,7 +5,7 @@ import theano.tensor as T
 
 class NADE(object):
 
-    def __init__(self, random_seed, l_rate=None, theano_rng=None, input=None, n_visible=400, n_hidden=200, W=None, bhid=None, bvis=None, W_prime=None, tied=False):
+    def __init__(self, random_seed, l_rate=None, input=None, n_visible=400, n_hidden=200, tied=False):
 
         rng = np.random.RandomState(123)
         init_range = np.sqrt(6. / (n_hidden + n_visible))
@@ -16,53 +16,24 @@ class NADE(object):
         self.n_hidden = n_hidden
         self.tied = tied
 
-        # Init W
-        if W:
-            print "loading W matrix"
-            initial_W = np.load(W + ".npy")
-        else:
-            print "randomly initializing W"
-            initial_W = np.asarray(rng.uniform(low=-init_range, high=init_range, size=(n_visible, n_hidden)), dtype=theano.config.floatX)
-        self.W = theano.shared(value=initial_W, name='W', borrow=True)
+        print "## initializing Model ##"
+        self.W = theano.shared(value=np.asarray(rng.uniform(low=-init_range, high=init_range, size=(n_visible, n_hidden)), dtype=theano.config.floatX), name='W', borrow=True)
+        self.b = theano.shared(value=np.zeros(n_hidden, dtype=theano.config.floatX), name='bhid', borrow=True)
+        self.b_prime = theano.shared(value=np.zeros(n_visible, dtype=theano.config.floatX), name='bvis', borrow=True)
+
+        self.params = [self.W, self.b, self.b_prime]
 
         # Init tied W
         if tied:
             self.W_prime = self.W
         else:
-            if not W_prime:
-                print "randomly initializing W_prime"
-                initial_W_prime = np.asarray(rng.uniform(low=-init_range, high=init_range, size=(n_visible, n_hidden)), dtype=theano.config.floatX)
-            else:
-                print "loading W_prime matrix"
-                initial_W_prime = np.load(W_prime + ".npy")
-            self.W_prime = theano.shared(value=initial_W_prime, name="W_prime", borrow=True)
-
-        # Init bhid
-        if bhid:
-            print "loading hidden bias"
-            initial_bhid = np.load(bhid + ".npy")
-        else:
-            print "randomly initializing hidden bias"
-            initial_bhid = np.zeros(n_hidden, dtype=theano.config.floatX)
-        self.b = theano.shared(value=initial_bhid, name='bhid', borrow=True)
-
-        # Init bvis
-        if bvis:
-            print "loading visible bias"
-            initial_bvis = np.load(bvis + ".npy")
-        else:
-            print "randomly initializing visible bias"
-            initial_bvis = np.zeros(n_visible, dtype=theano.config.floatX)
-        self.b_prime = theano.shared(value=initial_bvis, name='bvis', borrow=True)
+            self.W_prime = theano.shared(value=np.asarray(rng.uniform(low=-init_range, high=init_range, size=(n_visible, n_hidden)), dtype=theano.config.floatX), name="W_prime", borrow=True)
+            self.params += [self.W_prime]
 
         if input is None:
             self.x = T.dmatrix(name='input')
         else:
             self.x = input
-
-        self.params = [self.W, self.b, self.b_prime]
-        if tied:
-            self.params += [self.W_prime]
 
     def get_nll(self):
 

@@ -54,7 +54,7 @@ def trainNADE(src_folder, tgt_folder, batch_size=20, n_hid=40, learning_rate=0.1
     start_time = time.clock()
 
     train_set_x = theano.shared(np.asarray(np.zeros((1000, n_vis)), dtype=theano.config.floatX), borrow=True)
-    shared_l_rate = theano.shared(np.asarray(0.1, dtype='float32'), borrow=True)
+    shared_l_rate = theano.shared(np.asarray(learning_rate, dtype='float32'), borrow=True)
 
     cost, updates = da.get_cost_updates()
     train_da = theano.function([index], cost, updates=updates, givens=[(x, train_set_x[index * batch_size:(index + 1) * batch_size]), (l_rate, shared_l_rate)])
@@ -76,28 +76,25 @@ def trainNADE(src_folder, tgt_folder, batch_size=20, n_hid=40, learning_rate=0.1
 
         c = []
 
-        ipfile = open(src_folder + "mat_pic/train/ip.txt", "r")
+        with open(src_folder + "mat_pic/train/ip.txt", "r") as ipfile:
+            for line in ipfile:
+                next = line.strip().split(",")
+                load(next[0], train_set_x, n_vis)
+                for batch_index in range(0, int(next[1])):
+                    if(batch_index % 100 == 0):
+                        print batch_index
+                    c.append(train_da(batch_index))
 
-        for line in ipfile:
-            next = line.strip().split(",")
-            load(next[0], train_set_x, n_vis)
-            for batch_index in range(0, int(next[1])):
-                if(batch_index % 100 == 0):
-                    print batch_index
-                c.append(train_da(batch_index))
+            if(flag == 1):
+                flag = 0
+                diff = np.mean(c)
+                di = diff
+            else:
+                di = np.mean(c) - diff
+                diff = np.mean(c)
 
-        if(flag == 1):
-            flag = 0
-            diff = np.mean(c)
-            di = diff
-        else:
-            di = np.mean(c) - diff
-            diff = np.mean(c)
-
-            print 'Difference between 2 epochs is ', di
-        print 'Training epoch %d, cost ' % epoch, diff
-
-        ipfile.close()
+                print 'Difference between 2 epochs is ', di
+            print 'Training epoch %d, cost ' % epoch, diff
 
         detfile = open(tgt_folder + "details.txt", "a")
         detfile.write(str(diff) + "\n")
