@@ -1,3 +1,4 @@
+from __future__ import division
 import time
 import numpy as np
 
@@ -37,16 +38,18 @@ def trainNADE(src_folder, tgt_folder, batch_size=20, n_hid=40, learning_rate=0.1
         print "Epoch ", epoch
 
         nb_iterations = int(np.ceil(dataset['train']['length'] / batch_size))
-
         print '\tTraining   ...',
         train_err = 0
         for index in range(nb_iterations):
+            print index
             train_err += train_da(index)
         print "Done. avg NLL: {0:.6f}".format(train_err / nb_iterations)
 
+        nb_iterations_valid = int(np.ceil(dataset['valid']['length'] / batch_size))
         print '\tValidating ...',
-        valid_err = test_da()
-        print "Done. NLL: {0:.6f}".format(valid_err)
+        for index in range(nb_iterations_valid):
+            valid_err = test_da(index)
+        print "Done. NLL: {0:.6f}".format(valid_err / nb_iterations_valid)
 
     training_time = time.clock() - start_time
 
