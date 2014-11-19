@@ -46,7 +46,6 @@ def trainNADE(src_folder, tgt_folder, batch_size=20, n_hid=40, learning_rate=0.1
         train_err = 0
         start_time = t.time()
         for index in range(nb_iterations):
-            print index
             train_err += train_da(index)
         print get_done_text(start_time), " avg NLL: {0:.6f}".format(train_err / nb_iterations)
 
