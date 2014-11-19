@@ -16,7 +16,7 @@ class NADE(object):
         self.n_hidden = n_hidden
         self.tied = tied
 
-        print "## initializing Model ##"
+        print "## Initializing Model ##"
         self.W = theano.shared(value=np.asarray(rng.uniform(low=-init_range, high=init_range, size=(n_visible, n_hidden)), dtype=theano.config.floatX), name='W', borrow=True)
         self.b = theano.shared(value=np.zeros(n_hidden, dtype=theano.config.floatX), name='bhid', borrow=True)
         self.b_prime = theano.shared(value=np.zeros(n_visible, dtype=theano.config.floatX), name='bvis', borrow=True)
@@ -36,22 +36,18 @@ class NADE(object):
             self.x = input
 
     def get_nll(self):
-
-        def cum(W, X, V, bp, p_prev, a_prev, x_prev, b):
-
-            a = a_prev + theano.dot(T.shape_padright(x_prev, 1), T.shape_padleft(W, 1))
-            h = T.nnet.sigmoid(a + b)
-            o = T.nnet.sigmoid(T.dot(h, V) + bp)
-            p = p_prev - (X * T.log(o) + (1 - X) * T.log(1 - o))
-            return p, a, X
-
-        ([res1, _, _], updates) = theano.scan(fn=cum, outputs_info=[T.zeros_like(self.x.T[0]), T.zeros_like(theano.dot(self.x, self.W)), T.zeros_like(self.x.T[0])], sequences=[self.W, self.x.T, self.W_prime, self.b_prime], non_sequences=self.b)
-
-        return (res1[-1], updates)
+        input_times_W = self.x.T[:, :, None] * self.W[:, None, :]
+        acc_input_times_W = T.cumsum(input_times_W, axis=0)
+        acc_input_times_W = T.concatenate([T.zeros_like(input_times_W[[0]]), acc_input_times_W[:-1]], axis=0)
+        acc_input_times_W += self.b[None, None, :]
+        h = T.nnet.sigmoid(acc_input_times_W)
+        output = T.nnet.sigmoid(T.sum(h * self.W_prime[:, None, :], axis=2) + self.b_prime[:, None])
+        nll = T.sum(-(self.x.T*T.log(output) + (1-self.x.T)*T.log(1-output)))
+        return nll
 
     def get_cost_updates(self):
 
-        nll, updates = self.get_nll()
+        nll = self.get_nll()
         mean_nll = nll.mean()
 
         Wgrad = T.grad(mean_nll, self.W)
@@ -61,6 +57,7 @@ class NADE(object):
         if not self.tied:
             w_primegrad = T.grad(mean_nll, self.W_prime)
 
+        updates = {}
         updates[self.W] = self.W - self.lr_rate * Wgrad
         updates[self.b] = self.b - self.lr_rate * bgrad
         updates[self.b_prime] = self.b_prime - self.lr_rate * b_primegrad
@@ -72,7 +69,7 @@ class NADE(object):
 
     def get_cost(self):
 
-        nll, updates = self.get_nll()
+        nll = self.get_nll()
         mean_nll = nll.mean()
 
         return mean_nll
