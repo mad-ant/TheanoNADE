@@ -1,6 +1,7 @@
 import numpy as np
 import theano
 import theano.tensor as T
+from theano.compat.python2x import OrderedDict
 
 
 class NADE(object):
@@ -16,7 +17,6 @@ class NADE(object):
         self.n_hidden = n_hidden
         self.tied = tied
 
-        print "## Initializing Model ##"
         self.W = theano.shared(value=np.asarray(rng.uniform(low=-init_range, high=init_range, size=(n_visible, n_hidden)), dtype=theano.config.floatX), name='W', borrow=True)
         self.b = theano.shared(value=np.zeros(n_hidden, dtype=theano.config.floatX), name='bhid', borrow=True)
         self.b_prime = theano.shared(value=np.zeros(n_visible, dtype=theano.config.floatX), name='bvis', borrow=True)
@@ -43,6 +43,7 @@ class NADE(object):
         h = T.nnet.sigmoid(acc_input_times_W)
         output = T.nnet.sigmoid(T.sum(h * self.W_prime[:, None, :], axis=2) + self.b_prime[:, None])
         nll = T.sum(-(self.x.T*T.log(output) + (1-self.x.T)*T.log(1-output)))
+        #nll = -T.sum(T.nnet.softplus(-self.x.T * output + (1 - self.x.T) * output), axis=1)
         return nll
 
     def get_cost_updates(self):
@@ -57,7 +58,7 @@ class NADE(object):
         if not self.tied:
             w_primegrad = T.grad(mean_nll, self.W_prime)
 
-        updates = {}
+        updates = OrderedDict()
         updates[self.W] = self.W - self.lr_rate * Wgrad
         updates[self.b] = self.b - self.lr_rate * bgrad
         updates[self.b_prime] = self.b_prime - self.lr_rate * b_primegrad
