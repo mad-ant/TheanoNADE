@@ -6,20 +6,20 @@ from theano.compat.python2x import OrderedDict
 
 class NADE(object):
 
-    def __init__(self, random_seed, l_rate=None, input=None, n_visible=400, n_hidden=200, tied=False):
+    def __init__(self, random_seed, l_rate=None, input=None, input_size=400, n_hidden=200, tied=False):
 
         rng = np.random.RandomState(123)
-        init_range = np.sqrt(6. / (n_hidden + n_visible))
+        init_range = np.sqrt(6. / (n_hidden + input_size))
 
         # Set the number of visible units and hidden units in the network
         self.lr_rate = l_rate
-        self.n_visible = n_visible
+        self.input_size = input_size
         self.n_hidden = n_hidden
         self.tied = tied
 
-        self.W = theano.shared(value=np.asarray(rng.uniform(low=-init_range, high=init_range, size=(n_visible, n_hidden)), dtype=theano.config.floatX), name='W', borrow=True)
+        self.W = theano.shared(value=np.asarray(rng.uniform(low=-init_range, high=init_range, size=(input_size, n_hidden)), dtype=theano.config.floatX), name='W', borrow=True)
         self.b = theano.shared(value=np.zeros(n_hidden, dtype=theano.config.floatX), name='bhid', borrow=True)
-        self.b_prime = theano.shared(value=np.zeros(n_visible, dtype=theano.config.floatX), name='bvis', borrow=True)
+        self.b_prime = theano.shared(value=np.zeros(input_size, dtype=theano.config.floatX), name='bvis', borrow=True)
 
         self.params = [self.W, self.b, self.b_prime]
 
@@ -27,7 +27,7 @@ class NADE(object):
         if tied:
             self.W_prime = self.W
         else:
-            self.W_prime = theano.shared(value=np.asarray(rng.uniform(low=-init_range, high=init_range, size=(n_visible, n_hidden)), dtype=theano.config.floatX), name="W_prime", borrow=True)
+            self.W_prime = theano.shared(value=np.asarray(rng.uniform(low=-init_range, high=init_range, size=(input_size, n_hidden)), dtype=theano.config.floatX), name="W_prime", borrow=True)
             self.params += [self.W_prime]
 
         if input is None:
@@ -43,14 +43,11 @@ class NADE(object):
         h = T.nnet.sigmoid(acc_input_times_W)
 
         output = T.nnet.sigmoid(T.sum(h * self.W_prime[:, None, :], axis=2) + self.b_prime[:, None])
-        nll = T.sum(-(self.x.T * T.log(output) + (1 - self.x.T) * T.log(1 - output)))
-        #nll = -T.sum(T.nnet.softplus(-self.x.T * output + (1 - self.x.T) * output), axis=1)
-        return nll
+        return -T.sum(T.nnet.softplus(-self.x.T * output + (1 - self.x.T) * output), axis=1).mean()
 
     def get_cost_updates(self):
 
-        nll = self.get_nll()
-        mean_nll = nll.mean()
+        mean_nll = self.get_nll()
 
         Wgrad = T.grad(mean_nll, self.W)
         bgrad = T.grad(mean_nll, self.b)
@@ -68,13 +65,6 @@ class NADE(object):
             updates[self.W_prime] = self.W_prime - self.lr_rate * w_primegrad
 
         return (mean_nll, updates)
-
-    def get_cost(self):
-
-        nll = self.get_nll()
-        mean_nll = nll.mean()
-
-        return mean_nll
 
     # This method saves W, bvis and bhid matrices. `n` is the string attached to the file name.
     def save_matrices(self, folder, n):
