@@ -1,11 +1,15 @@
 from __future__ import division
-import time
+import time as t
 import numpy as np
 
 import theano
 import theano.tensor as T
 
 import NADE
+
+
+def get_done_text(start_time):
+    return "DONE in {:.4f} seconds.".format(t.time() - start_time)
 
 
 def trainNADE(src_folder, tgt_folder, batch_size=20, n_hid=40, learning_rate=0.1, training_epochs=40, gen_data=True, tied=False):
@@ -18,7 +22,7 @@ def trainNADE(src_folder, tgt_folder, batch_size=20, n_hid=40, learning_rate=0.1
     x = T.matrix('x')
 
     print "## Initializing Model ...",
-    start_time = time.clock()
+    start_time_train = t.time()
     da = NADE.NADE(random_seed=1234, l_rate=learning_rate, input=x, n_visible=dataset['input_size'], n_hidden=n_hid, tied=tied)
 
     cost, updates = da.get_cost_updates()
@@ -40,20 +44,22 @@ def trainNADE(src_folder, tgt_folder, batch_size=20, n_hid=40, learning_rate=0.1
         nb_iterations = int(np.ceil(dataset['train']['length'] / batch_size))
         print '\tTraining   ...',
         train_err = 0
+        start_time = t.time()
         for index in range(nb_iterations):
             print index
             train_err += train_da(index)
-        print "Done. avg NLL: {0:.6f}".format(train_err / nb_iterations)
+        print get_done_text(start_time), " avg NLL: {0:.6f}".format(train_err / nb_iterations)
 
         nb_iterations_valid = int(np.ceil(dataset['valid']['length'] / batch_size))
         print '\tValidating ...',
+        valid_err = 0
+        start_time = t.time()
         for index in range(nb_iterations_valid):
-            valid_err = test_da(index)
-        print "Done. NLL: {0:.6f}".format(valid_err / nb_iterations_valid)
+            valid_err += test_da(index)
+        print get_done_text(start_time), " NLL: {0:.6f}".format(valid_err / nb_iterations_valid)
 
-    training_time = time.clock() - start_time
+    print "Complete training ", get_done_text(start_time_train)
 
-    print ' code ran for %.2fm' % (training_time / 60.)
     da.save_matrices(tgt_folder, "final")
 
 
