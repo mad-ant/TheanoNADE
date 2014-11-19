@@ -32,9 +32,9 @@ def trainNADE(src_folder, tgt_folder, batch_size=20, n_hid=40, learning_rate=0.1
                                givens={x: dataset['train']['data'][index * batch_size:(index + 1) * batch_size]})
 
     vcost = da.get_cost()
-    test_da = theano.function(inputs=[],
+    test_da = theano.function(inputs=[index],
                               outputs=vcost,
-                              givens={x: dataset['test']['data']})
+                              givens={x: dataset['test']['data'][index * batch_size:(index + 1) * batch_size]})
     print "Done\n"
 
     print "## Training batch={0} ##".format(batch_size)

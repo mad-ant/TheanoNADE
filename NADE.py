@@ -41,8 +41,9 @@ class NADE(object):
         acc_input_times_W = T.concatenate([T.zeros_like(input_times_W[[0]]), acc_input_times_W[:-1]], axis=0)
         acc_input_times_W += self.b[None, None, :]
         h = T.nnet.sigmoid(acc_input_times_W)
+
         output = T.nnet.sigmoid(T.sum(h * self.W_prime[:, None, :], axis=2) + self.b_prime[:, None])
-        nll = T.sum(-(self.x.T*T.log(output) + (1-self.x.T)*T.log(1-output)))
+        nll = T.sum(-(self.x.T * T.log(output) + (1 - self.x.T) * T.log(1 - output)))
         #nll = -T.sum(T.nnet.softplus(-self.x.T * output + (1 - self.x.T) * output), axis=1)
         return nll
 
