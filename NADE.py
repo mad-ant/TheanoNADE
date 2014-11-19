@@ -43,7 +43,7 @@ class NADE(object):
         h = T.nnet.sigmoid(acc_input_times_W)
 
         output = T.nnet.sigmoid(T.sum(h * self.W_prime[:, None, :], axis=2) + self.b_prime[:, None])
-        return -T.sum(T.nnet.softplus(-self.x.T * output + (1 - self.x.T) * output), axis=1).mean()
+        return T.sum(T.nnet.softplus(-self.x.T * output + (1 - self.x.T) * output), axis=1).mean()
 
     def get_cost_updates(self):
 

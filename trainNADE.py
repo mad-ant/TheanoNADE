@@ -30,7 +30,7 @@ def trainNADE(src_folder, tgt_folder, batch_size=20, n_hid=40, learning_rate=0.1
     train_model = theano.function(inputs=[index],
                                   outputs=cost,
                                   updates=updates,
-                                  givens={x: dataset['valid']['data'][index * batch_size:(index + 1) * batch_size]})
+                                  givens={x: dataset['train']['data'][index * batch_size:(index + 1) * batch_size]})
 
     test_model = theano.function(inputs=[index],
                                  outputs=cost,
@@ -42,7 +42,7 @@ def trainNADE(src_folder, tgt_folder, batch_size=20, n_hid=40, learning_rate=0.1
     for epoch in xrange(training_epochs):
         print "Epoch ", epoch
 
-        nb_iterations = int(np.ceil(dataset['valid']['length'] / batch_size))
+        nb_iterations = int(np.ceil(dataset['train']['length'] / batch_size))
         print '\tTraining   ...',
         train_err = 0
         start_time = t.time()
