@@ -1,4 +1,5 @@
 from __future__ import division
+import os
 import time as t
 import numpy as np
 
@@ -12,7 +13,9 @@ def get_done_text(start_time):
     return "DONE in {:.4f} seconds.".format(t.time() - start_time)
 
 
-def trainNADE(src_folder, tgt_folder, batch_size=20, n_hid=40, learning_rate=0.1, training_epochs=40, gen_modelta=True, tied=False):
+def trainNADE(save_path, batch_size=20, n_hid=40, learning_rate=0.1, training_epochs=40, tied=False):
+    if not os.path.exists(save_path):
+        os.makedirs(save_path)
 
     print "## Loading dataset ...",
     start_time = t.time()
@@ -32,13 +35,20 @@ def trainNADE(src_folder, tgt_folder, batch_size=20, n_hid=40, learning_rate=0.1
                                   updates=updates,
                                   givens={x: dataset['train']['data'][index * batch_size:(index + 1) * batch_size]})
 
-    test_model = theano.function(inputs=[index],
-                                 outputs=cost,
-                                 givens={x: dataset['test']['data'][index * batch_size:(index + 1) * batch_size]})
+    valid_nll = theano.function(inputs=[index],
+                                outputs=cost,
+                                givens={x: dataset['valid']['data'][index * batch_size:(index + 1) * batch_size]})
+
+    test_nll = theano.function(inputs=[index],
+                               outputs=cost,
+                               givens={x: dataset['test']['data'][index * batch_size:(index + 1) * batch_size]})
+    #theano.printing.pydotprint(train_model, 'train_model')
     print get_done_text(start_time)
 
     print "## Training batch={0} hidden_size={1} ##".format(batch_size, n_hid)
     start_time_train = t.time()
+    best_epoch = 0
+    best_nll = np.inf
     for epoch in xrange(training_epochs):
         print "Epoch ", epoch
 
@@ -55,12 +65,26 @@ def trainNADE(src_folder, tgt_folder, batch_size=20, n_hid=40, learning_rate=0.1
         valid_err = 0
         start_time = t.time()
         for index in range(nb_iterations_valid):
-            valid_err += test_model(index)
+            valid_err += valid_nll(index)
         print get_done_text(start_time), " NLL: {0:.6f}".format(valid_err / nb_iterations_valid)
 
-    print "Complete training ", get_done_text(start_time_train)
+        if valid_err < best_nll:
+            best_epoch = epoch
+            best_nll = best_nll
+            model.save(save_path)
 
-    model.save_matrices(tgt_folder, "final")
+    print "### Training", get_done_text(start_time_train), "###"
 
+    print '\n### Evaluating best model from Epoch {0} ###'.format(best_epoch)
+    model.load(save_path)
+    test_err = 0
+    nb_iterations_test = int(np.ceil(dataset['test']['length'] / batch_size))
+    for index in range(nb_iterations_test):
+        test_err += test_nll(index)
+    print "\tBest test error is : {0:.6f}".format(test_err / nb_iterations_test)
+    valid_err = 0
+    for index in range(nb_iterations_valid):
+        valid_err += valid_nll(index)
+    print "\tBest valid error is : {0:.6f}".format(valid_err / nb_iterations_valid)
 
-trainNADE("data/bmnist/", "result/bmnist/", batch_size=100, n_hid=500, learning_rate=0.1, training_epochs=20, gen_modelta=True, tied=True)
+trainNADE("result/bmnist/", batch_size=100, n_hid=500, learning_rate=0.1, training_epochs=1, tied=True)
