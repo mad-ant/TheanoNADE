@@ -20,12 +20,6 @@ def trainNADE(save_path, batch_size=100, hidden_size=500, learning_rate=0.05, ma
     print "## Loading dataset ...",
     start_time = t.time()
     dataset = np.load('binarized_mnist.npz')['arr_0'].item()
-
-    ratio = 5000
-    for sub in ['train', 'valid', 'test']:
-        dataset[sub]['length'] = dataset[sub]['length'] / ratio
-        dataset[sub]['data'] = dataset[sub]['data'][:int(dataset[sub]['length'])]
-
     print get_done_text(start_time)
 
     index = T.lscalar()
