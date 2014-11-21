@@ -13,7 +13,7 @@ def get_done_text(start_time):
     return "DONE in {:.4f} seconds.".format(t.time() - start_time)
 
 
-def trainNADE(save_path, batch_size=20, n_hid=40, learning_rate=0.1, training_epochs=40, tied=False):
+def trainNADE(save_path, batch_size=100, hidden_size=500, learning_rate=0.05, max_epochs=100, tied=False):
     if not os.path.exists(save_path):
         os.makedirs(save_path)
 
@@ -23,33 +23,37 @@ def trainNADE(save_path, batch_size=20, n_hid=40, learning_rate=0.1, training_ep
     print get_done_text(start_time)
 
     index = T.lscalar()
-    x = T.matrix('x')
+    input = T.matrix('input')
 
     print "## Initializing Model ...",
     start_time = t.time()
-    model = NADE.NADE(random_seed=1234, l_rate=learning_rate, input=x, input_size=dataset['input_size'], n_hidden=n_hid, tied=tied)
+    model = NADE.NADE(random_seed=1234, l_rate=learning_rate, input=input, input_size=dataset['input_size'], hidden_size=hidden_size, tied=tied)
 
     cost, updates = model.get_cost_updates()
     train_model = theano.function(inputs=[index],
                                   outputs=cost,
                                   updates=updates,
-                                  givens={x: dataset['train']['data'][index * batch_size:(index + 1) * batch_size]})
+                                  givens={input: dataset['train']['data'][index * batch_size:(index + 1) * batch_size]})
+
+    train_nll = theano.function(inputs=[index],
+                                outputs=cost,
+                                givens={input: dataset['train']['data'][index * batch_size:(index + 1) * batch_size]})
 
     valid_nll = theano.function(inputs=[index],
                                 outputs=cost,
-                                givens={x: dataset['valid']['data'][index * batch_size:(index + 1) * batch_size]})
+                                givens={input: dataset['valid']['data'][index * batch_size:(index + 1) * batch_size]})
 
     test_nll = theano.function(inputs=[index],
                                outputs=cost,
-                               givens={x: dataset['test']['data'][index * batch_size:(index + 1) * batch_size]})
+                               givens={input: dataset['test']['data'][index * batch_size:(index + 1) * batch_size]})
     #theano.printing.pydotprint(train_model, 'train_model')
     print get_done_text(start_time)
 
-    print "## Training batch={0} hidden_size={1} ##".format(batch_size, n_hid)
+    print "## Training batch={0} hidden_size={1} ##".format(batch_size, hidden_size)
     start_time_train = t.time()
     best_epoch = 0
     best_nll = np.inf
-    for epoch in xrange(training_epochs):
+    for epoch in xrange(max_epochs):
         print "Epoch ", epoch
 
         nb_iterations = int(np.ceil(dataset['train']['length'] / batch_size))
@@ -77,14 +81,12 @@ def trainNADE(save_path, batch_size=20, n_hid=40, learning_rate=0.1, training_ep
 
     print '\n### Evaluating best model from Epoch {0} ###'.format(best_epoch)
     model.load(save_path)
-    test_err = 0
-    nb_iterations_test = int(np.ceil(dataset['test']['length'] / batch_size))
-    for index in range(nb_iterations_test):
-        test_err += test_nll(index)
-    print "\tBest test error is : {0:.6f}".format(test_err / nb_iterations_test)
-    valid_err = 0
-    for index in range(nb_iterations_valid):
-        valid_err += valid_nll(index)
-    print "\tBest valid error is : {0:.6f}".format(valid_err / nb_iterations_valid)
+    for subset in ['test', 'valid', 'train']:
+        nll = locals()["{}_nll".format(subset)]
+        err = 0
+        nb_iterations = int(np.ceil(dataset[subset]['length'] / batch_size))
+        for index in range(nb_iterations):
+            err += nll(index)
+        print "\tBest {1} error is : {0:.6f}".format(err / nb_iterations, subset)
 
-trainNADE("result/bmnist/", batch_size=100, n_hid=500, learning_rate=0.1, training_epochs=1, tied=True)
+trainNADE("result/bmnist/", batch_size=100, hidden_size=500, learning_rate=0.05, max_epochs=100, tied=True)
