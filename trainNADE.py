@@ -1,5 +1,6 @@
 from __future__ import division
 import os
+import sys
 import time as t
 import numpy as np
 
@@ -14,6 +15,7 @@ def get_done_text(start_time):
 
 
 def trainNADE(save_path, batch_size=100, hidden_size=500, learning_rate=0.05, max_epochs=100, look_ahead=15, tied=False):
+    save_path = "{}/{}_{}_{}_{}_{}_{}".format(save_path, batch_size, hidden_size, learning_rate, max_epochs, look_ahead, tied)
     if not os.path.exists(save_path):
         os.makedirs(save_path)
 
@@ -100,5 +102,41 @@ def trainNADE(save_path, batch_size=100, hidden_size=500, learning_rate=0.05, ma
         print "\tBest {1} error is : {0:.6f}".format(err / nb_iterations, subset)
 
 
+def parse_args(args):
+    import argparse
+
+    class GroupedAction(argparse.Action):
+
+        def __init__(self, option_strings, dest, nargs=None, **kwargs):
+            super(GroupedAction, self).__init__(option_strings, dest, **kwargs)
+
+        def __call__(self, parser, namespace, values, option_string=None):
+            group = self.container.title
+            dest = self.dest
+            groupspace = getattr(namespace, group, argparse.Namespace())
+            setattr(groupspace, dest, values)
+            setattr(namespace, group, groupspace)
+
+    parser = argparse.ArgumentParser(description='Train the NADE model.')
+
+    group_trainer = parser.add_argument_group('train')
+    group_trainer.add_argument('learning_rate', type=float, action=GroupedAction, default=argparse.SUPPRESS)
+    group_trainer.add_argument('max_epochs', type=lambda x: np.inf if x == "-1" else int(x), help="If -1 will run until convergence.", action=GroupedAction, default=argparse.SUPPRESS)
+    group_trainer.add_argument('batch_size', type=int, action=GroupedAction, default=argparse.SUPPRESS)
+    group_trainer.add_argument('look_ahead', type=int, action=GroupedAction, default=argparse.SUPPRESS)
+
+    group_model = parser.add_argument_group('model')
+    group_model.add_argument('hidden_size', type=int, action=GroupedAction, default=argparse.SUPPRESS)
+    #group_model.add_argument('random_seed', type=int, action=GroupedAction, default=argparse.SUPPRESS)
+    group_model.add_argument('tied', type=bool, action=GroupedAction, default=argparse.SUPPRESS)
+
+    args = parser.parse_args()
+
+    return args
+
 if __name__ == '__main__':
-    trainNADE("result/bmnist/", batch_size=100, hidden_size=500, learning_rate=0.05, max_epochs=np.inf, tied=True)
+    args = parse_args(sys.argv)
+    hyperparams = vars(args.model)
+    trainingparams = vars(args.train)
+
+    trainNADE("result/bmnist/", tied=hyperparams['tied'], hidden_size=hyperparams['hidden_size'], look_ahead=trainingparams['look_ahead'], batch_size=trainingparams['batch_size'], learning_rate=trainingparams['learning_rate'], max_epochs=trainingparams['max_epochs'])
