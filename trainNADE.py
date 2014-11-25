@@ -128,7 +128,7 @@ def parse_args(args):
     group_model = parser.add_argument_group('model')
     group_model.add_argument('hidden_size', type=int, action=GroupedAction, default=argparse.SUPPRESS)
     #group_model.add_argument('random_seed', type=int, action=GroupedAction, default=argparse.SUPPRESS)
-    group_model.add_argument('tied', type=bool, action=GroupedAction, default=argparse.SUPPRESS)
+    group_model.add_argument('tied', type=eval, choices=[False, True], action=GroupedAction, default=argparse.SUPPRESS)
 
     args = parser.parse_args()
 
