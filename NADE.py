@@ -37,9 +37,9 @@ class NADE(object):
         #acc_input_times_W = T.concatenate([T.zeros_like(input_times_W[[0]]), T.cumsum(input_times_W, axis=0)[:-1]], axis=0)
         # Hack for no GPUSplit
         acc_input_times_W = T.cumsum(input_times_W, axis=0)
-        #acc_input_times_W = T.roll(acc_input_times_W, 1)  # USES Join internally too
-        acc_input_times_W = T.set_subtensor(acc_input_times_W[:, 1:], acc_input_times_W[:, :-1])
-        acc_input_times_W = T.set_subtensor(acc_input_times_W[:, 0], 0.0)
+        #acc_input_times_W = T.roll(acc_input_times_W, 1, axis=1???)  # USES Join internally too
+        acc_input_times_W = T.set_subtensor(acc_input_times_W[1:], acc_input_times_W[:-1])
+        acc_input_times_W = T.set_subtensor(acc_input_times_W[0, :], 0.0)
 
         acc_input_times_W += self.b[None, None, :]
         h = T.nnet.sigmoid(acc_input_times_W)
