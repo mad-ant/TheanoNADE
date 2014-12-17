@@ -1,6 +1,7 @@
 import numpy as np
 import theano
 import theano.tensor as T
+from momentums import AdaDelta
 from weights_initializer import WeightsInitializer
 
 
@@ -39,7 +40,6 @@ class NADE(object):
         self.b = theano.shared(value=np.zeros(hidden_size, dtype=theano.config.floatX), name='bhid', borrow=True)
         self.b_prime = theano.shared(value=np.zeros(input_size, dtype=theano.config.floatX), name='bvis', borrow=True)
 
-        #self.parameters = {str(self.W): self.W, str(self.b): self.b, str(self.b_prime): self.b_prime}
         self.parameters = [self.W, self.b, self.b_prime]
 
         # Init tied W
@@ -47,7 +47,6 @@ class NADE(object):
             self.W_prime = self.W
         else:
             self.W_prime = theano.shared(value=weights_initialization((input_size, hidden_size)), name='W_prime', borrow=True)
-            #self.parameters[str(self.W_prime)] = self.W_prime
             self.parameters.append(self.W_prime)
 
         # The loss function
@@ -59,10 +58,11 @@ class NADE(object):
         current_iteration = T.scalar()
         decreased_learning_rate = learning_rate / (1 + (decrease_constant * current_iteration))
         parameters_gradient = T.grad(loss, self.parameters)
+
         if momentum == "None":
             updates = [(param, param - decreased_learning_rate * param_gradient) for param, param_gradient in zip(self.parameters, parameters_gradient)]
-        #elif momentum == "adadelta":
-        #    updates = AdaDelta(epsilon=decreased_learning_rate).get_updates(zip(self.parameters, parameters_gradient))
+        elif momentum == "adadelta":
+           updates = AdaDelta(epsilon=decreased_learning_rate).get_updates(zip(self.parameters, parameters_gradient))
 
         #
         # Functions to train and use the model
