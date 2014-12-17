@@ -230,5 +230,5 @@ if __name__ == '__main__':
 
     #
     # WRITING RESULTS #####
-    model_info = [trainingparams['learning_rate'], trainingparams['decrease_constant'], hyperparams['hidden_size'], hyperparams['random_seed'], hyperparams['hidden_activation'], trainingparams['max_epochs'], best_epoch, trainingparams['look_ahead'], trainingparams['batch_size'], trainingparams['momentum'], trainingparams['dropout_rate'], hyperparams['weights_initialization'], float(model_evaluation['train'][0]), float(model_evaluation['train'][1]), float(model_evaluation['valid'][0]), float(model_evaluation['valid'][1]), float(model_evaluation['test'][0]), float(model_evaluation['test'][1]), total_train_time]
-    #utils.write_result(dataset_name, model_info, experiment_name)
+    model_info = [trainingparams['learning_rate'], trainingparams['decrease_constant'], hyperparams['hidden_size'], hyperparams['random_seed'], hyperparams['hidden_activation'], hyperparams['tied'], trainingparams['max_epochs'], best_epoch, trainingparams['look_ahead'], trainingparams['batch_size'], trainingparams['momentum'], trainingparams['dropout_rate'], hyperparams['weights_initialization'], float(model_evaluation['train'][0]), float(model_evaluation['train'][1]), float(model_evaluation['valid'][0]), float(model_evaluation['valid'][1]), float(model_evaluation['test'][0]), float(model_evaluation['test'][1]), total_train_time]
+    utils.write_result(dataset_name, model_info, experiment_name)
