@@ -209,7 +209,6 @@ if __name__ == '__main__':
 
     #
     # TRAINING LEARNER ####
-    trainingparams['max_epochs'] = 1
     best_epoch, total_train_time = train_model(model, dataset, trainingparams['look_ahead'], trainingparams['max_epochs'], trainingparams['batch_size'], save_path_experiment, trainer_status)
 
     #
