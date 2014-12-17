@@ -38,7 +38,7 @@ def write_result(dataset_name, model_info, experiment_name):
 
     header = ["Learning Rate", "Decrease Constant", "Hidden Layers", "Random Seed", "Activation Function", "Max Epoch", "Best Epoch", "Look Ahead", "Batch Size", "Shuffle Mask", "Shuffling Type", "Nb Shuffle Per Valid", "Conditioning Mask", "Direct Input Connect", "Direct Output Connect", "Pre-Training", "Pre-Training Max Epoch", "Momentum", "Dropout Rate", "Weights Initialization", "Mask Distribution knob", "Training err", "Training err std", "Validation err", "Validation err std", "Test err", "Test err std", "Total Training Time", "Experiment Name"]
 
-    sheet = GSheet('1wYmO4Rzd4595qE4sb0xNl8oLpXjoWmFqazoncUaIegE', 'mathieu.germain@gmail.com', 'nigvtrjsrshqzsqb')
+    sheet = GSheet('1gwMuCMHE0mhu7EMP74djEYARfSvnBrMnsAE-cTGJS2w', 'mathieu.germain@gmail.com', 'nigvtrjsrshqzsqb')
     worksheetID = sheet.getWorksheetID(dataset_name)
 
     if worksheetID is None:
