@@ -48,8 +48,9 @@ def train_model(model, dataset, look_ahead, max_epochs, batch_size, save_model_p
         nb_iterations = int(np.ceil(dataset['train']['length'] / batch_size))
         train_err = 0
         for index in range(nb_iterations):
-            current_iteration = ((trainer_status["epoch"] - 1) * nb_iterations) + index
-            train_err += model.learn(index, current_iteration)
+            #current_iteration = ((trainer_status["epoch"] - 1) * nb_iterations) + index
+            #train_err += model.learn(index, current_iteration)
+            train_err += model.learn(index)
             # print train_err
 
         print utils.get_done_text(start_time), " avg NLL: {0:.6f}".format(train_err / nb_iterations)
@@ -137,12 +138,15 @@ def parse_args(args):
 
 
 def save_model_params(model, model_path):
-    np.savez_compressed(os.path.join(model_path, "params"), model.parameters)
+    np.savez_compressed(os.path.join(model_path, "params"), model.parameters, model.momentum.parameters)
 
 
 def load_model_params(model, model_path):
     for i, param in enumerate(np.load(os.path.join(model_path, "params.npz"))['arr_0']):
         model.parameters[i].set_value(param.get_value())
+
+    for i, param in enumerate(np.load(os.path.join(model_path, "params.npz"))['arr_1']):
+        model.momentum.parameters[i].set_value(param.get_value())
 
 activation_functions = {
     "sigmoid": theano.tensor.nnet.sigmoid,

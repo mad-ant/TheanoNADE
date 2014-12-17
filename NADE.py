@@ -1,8 +1,9 @@
 import numpy as np
 import theano
 import theano.tensor as T
-from momentums import AdaDelta
+
 from weights_initializer import WeightsInitializer
+from momentums import DecreasingLearningRate, AdaDelta
 
 
 class NADE(object):
@@ -49,26 +50,27 @@ class NADE(object):
             self.W_prime = theano.shared(value=weights_initialization((input_size, hidden_size)), name='W_prime', borrow=True)
             self.parameters.append(self.W_prime)
 
+        # Initialize momentum
+        if momentum == "None":
+            self.momentum = DecreasingLearningRate(learning_rate, decrease_constant)
+        elif momentum == "adadelta":
+            self.momentum = AdaDelta(decay=decrease_constant, epsilon=learning_rate)
+
         # The loss function
         input = T.matrix(name="input")
         nll, output = self.get_nll(input)
         loss = nll.mean()
 
         # How to update the parameters
-        current_iteration = T.scalar()
-        decreased_learning_rate = learning_rate / (1 + (decrease_constant * current_iteration))
         parameters_gradient = T.grad(loss, self.parameters)
-
-        if momentum == "None":
-            updates = [(param, param - decreased_learning_rate * param_gradient) for param, param_gradient in zip(self.parameters, parameters_gradient)]
-        elif momentum == "adadelta":
-           updates = AdaDelta(epsilon=decreased_learning_rate).get_updates(zip(self.parameters, parameters_gradient))
+        updates = self.momentum.get_updates(zip(self.parameters, parameters_gradient))
 
         #
         # Functions to train and use the model
         index = T.lscalar()
         self.learn = theano.function(name='learn',
-                                     inputs=[index, current_iteration],
+                                     #inputs=[index, current_iteration],
+                                     inputs=[index],
                                      outputs=loss,
                                      updates=updates,
                                      givens={input: dataset['train']['data'][index * batch_size:(index + 1) * batch_size]},
