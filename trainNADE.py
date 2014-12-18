@@ -119,7 +119,7 @@ def parse_args(args):
     group_trainer.add_argument('max_epochs', type=lambda x: np.inf if x == "-1" else int(x), help="If -1 will run until convergence.", action=GroupedAction, default=argparse.SUPPRESS)
     group_trainer.add_argument('batch_size', type=int, action=GroupedAction, default=argparse.SUPPRESS)
     group_trainer.add_argument('look_ahead', type=int, action=GroupedAction, default=argparse.SUPPRESS)
-    group_trainer.add_argument('momentum', choices=['None', 'adadelta'], action=GroupedAction, default=argparse.SUPPRESS)
+    group_trainer.add_argument('momentum', choices=['None', 'adadelta', 'adagrad', 'rmsprop'], action=GroupedAction, default=argparse.SUPPRESS)
     group_trainer.add_argument('dropout_rate', type=float, action=GroupedAction, default=argparse.SUPPRESS)
 
     group_model = parser.add_argument_group('model')

@@ -31,14 +31,42 @@ class DecreasingLearningRate(object):
 
         return updates
 
+class AdaGrad(object):
+    # Ref. Duchi, 2010 - Adaptive subgradient methods for online leaning and stochastic optimization
+    #Sum of per-dimension gradient's l2-norm and parameters update's l2-norm
+    def __init__(self, learning_rate, epsilon=1e-6):
+        self.learning_rate = learning_rate
+        self.epsilon = epsilon
+        self.parameters = []
+
+    def get_updates(self, grads):
+        grads = OrderedDict(grads)
+        updates = OrderedDict()
+
+        for param in grads.keys():
+            # sum_squared_grad := \sum g_t^2
+            sum_squared_grad = theano.shared(theano._asarray(param.get_value() * 0., dtype=theano.config.floatX), name='mean_square_grad_' + param.name, borrow=False)
+            self.parameters.append(sum_squared_grad)
+
+            # Accumulate gradient
+            new_sum_squared_grad = sum_squared_grad + T.sqr(grads[param])
+
+            # Compute update
+            root_sum_squared = T.sqrt(new_sum_squared_grad + self.epsilon)
+
+            # Apply update
+            updates[sum_squared_grad] = new_sum_squared_grad
+            updates[param] = param - (self.learning_rate/root_sum_squared) * grads[param]
+
+        return updates
+
 
 class AdaDelta(object):
     """
     Implements the AdaDelta learning rule as described in:
     "AdaDelta: An Adaptive Learning Rate Method", Matthew D. Zeiler.
     """
-
-    def __init__(self, decay=0.95, epsilon=0.0000001):
+    def __init__(self, decay=0.95, epsilon=1e-7):
         """
         Parameters
         ----------
@@ -78,5 +106,44 @@ class AdaDelta(object):
             updates[mean_square_grad] = new_mean_squared_grad
             updates[mean_square_dx] = new_mean_square_dx
             updates[param] = param + delta_x_t
+
+        return updates
+
+
+class RMSProp(object):
+    # Ref. Tieleman, T. and Hinton, G. (2012) - Lecture 6.5 - rmsprop, COURSERA: Neural Networks for Machine Learning
+    # Sum of per-dimension gradient's l2-norm and parameters update's l2-norm
+    def __init__(self, learning_rate, decay=0.95, epsilon=1e-6):
+        """
+        Parameters
+        ----------
+        decay: float
+            decay rate (related to the window of the moving average)
+        """
+        assert decay >= 0.
+        assert decay < 1.
+        self.learning_rate = learning_rate
+        self.decay = decay
+        self.epsilon = epsilon
+        self.parameters = []
+
+    def get_updates(self, grads):
+        grads = OrderedDict(grads)
+        updates = OrderedDict()
+
+        for param in grads.keys():
+            # mean_squared_grad := \sum g_t^2
+            mean_squared_grad = theano.shared(theano._asarray(param.get_value() * 0., dtype=theano.config.floatX), name='mean_square_grad_' + param.name, borrow=False)
+            self.parameters.append(mean_squared_grad)
+
+            # Accumulate gradient
+            new_mean_squared_grad = T.cast(self.decay*mean_squared_grad + (1-self.decay)*T.sqr(grads[param]), dtype=theano.config.floatX)
+
+            # Compute update
+            root_mean_squared = T.sqrt(new_mean_squared_grad + self.epsilon)
+
+            # Apply update
+            updates[mean_squared_grad] = new_mean_squared_grad
+            updates[param] = param - (self.learning_rate/root_mean_squared) * grads[param]
 
         return updates
