@@ -25,6 +25,7 @@ class NADE(object):
 
     #def __init__(self, random_seed, l_rate=None, input=None, input_size=400, hidden_size=200, tied=False):
         input_size = dataset['input_size']
+        self.hidden_activation = hidden_activation
 
         class SeedGenerator(object):
         # This class purpose is to maximize randomness and still keep reproducibility
@@ -113,7 +114,7 @@ class NADE(object):
         acc_input_times_W = T.set_subtensor(acc_input_times_W[0, :], 0.0)
 
         acc_input_times_W += self.b[None, None, :]
-        h = T.nnet.sigmoid(acc_input_times_W)
+        h = self.hidden_activation(acc_input_times_W)
 
         pre_output = T.sum(h * self.W_prime[:, None, :], axis=2) + self.b_prime[:, None]
         output = T.nnet.sigmoid(pre_output)
