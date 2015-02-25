@@ -5,6 +5,7 @@ from theano.compat.python2x import OrderedDict
 
 
 class DecreasingLearningRate(object):
+
     def __init__(self, learning_rate, decrease_constant=0.95):
         """
         Parameters
@@ -31,9 +32,11 @@ class DecreasingLearningRate(object):
 
         return updates
 
+
 class AdaGrad(object):
     # Ref. Duchi, 2010 - Adaptive subgradient methods for online leaning and stochastic optimization
-    #Sum of per-dimension gradient's l2-norm and parameters update's l2-norm
+    # Sum of per-dimension gradient's l2-norm and parameters update's l2-norm
+
     def __init__(self, learning_rate, epsilon=1e-6):
         self.learning_rate = learning_rate
         self.epsilon = epsilon
@@ -56,16 +59,18 @@ class AdaGrad(object):
 
             # Apply update
             updates[sum_squared_grad] = new_sum_squared_grad
-            updates[param] = param - (self.learning_rate/root_sum_squared) * grads[param]
+            updates[param] = param - (self.learning_rate / root_sum_squared) * grads[param]
 
         return updates
 
 
 class AdaDelta(object):
+
     """
     Implements the AdaDelta learning rule as described in:
     "AdaDelta: An Adaptive Learning Rate Method", Matthew D. Zeiler.
     """
+
     def __init__(self, decay=0.95, epsilon=1e-7):
         """
         Parameters
@@ -113,6 +118,7 @@ class AdaDelta(object):
 class RMSProp(object):
     # Ref. Tieleman, T. and Hinton, G. (2012) - Lecture 6.5 - rmsprop, COURSERA: Neural Networks for Machine Learning
     # Sum of per-dimension gradient's l2-norm and parameters update's l2-norm
+
     def __init__(self, learning_rate, decay=0.95, epsilon=1e-6):
         """
         Parameters
@@ -137,13 +143,13 @@ class RMSProp(object):
             self.parameters.append(mean_squared_grad)
 
             # Accumulate gradient
-            new_mean_squared_grad = T.cast(self.decay*mean_squared_grad + (1-self.decay)*T.sqr(grads[param]), dtype=theano.config.floatX)
+            new_mean_squared_grad = T.cast(self.decay * mean_squared_grad + (1 - self.decay) * T.sqr(grads[param]), dtype=theano.config.floatX)
 
             # Compute update
             root_mean_squared = T.sqrt(new_mean_squared_grad + self.epsilon)
 
             # Apply update
             updates[mean_squared_grad] = new_mean_squared_grad
-            updates[param] = param - (self.learning_rate/root_mean_squared) * grads[param]
+            updates[param] = param - (self.learning_rate / root_mean_squared) * grads[param]
 
         return updates
