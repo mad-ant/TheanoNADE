@@ -115,6 +115,84 @@ class AdaDelta(object):
         return updates
 
 
+class Adam(object):
+
+    def __init__(self, learning_rate=0.0002, b1=0.1, b2=0.001, epsilon=1e-8):
+        self.learning_rate = learning_rate
+        self.b1 = b1
+        self.b2 = b2
+        self.epsilon = epsilon
+        self.i = theano.shared(np.float32(0.))
+        self.parameters = []
+
+    def get_updates(self, grads):
+        grads = OrderedDict(grads)
+        updates = OrderedDict()
+
+        i_t = self.i + 1.
+        fix1 = 1. - (1. - self.b1) ** i_t
+        fix2 = 1. - (1. - self.b2) ** i_t
+        lr_t = self.learning_rate * (T.sqrt(fix2) / fix1)
+
+        for param in grads.keys():
+            m = theano.shared(param.get_value() * 0.)
+            self.parameters.append(m)
+            v = theano.shared(param.get_value() * 0.)
+            self.parameters.append(v)
+
+            m_t = (self.b1 * grads[param]) + ((1. - self.b1) * m)
+            v_t = (self.b2 * T.sqr(grads[param])) + ((1. - self.b2) * v)
+            g_t = m_t / (T.sqrt(v_t) + self.epsilon)
+            p_t = param - (lr_t * g_t)
+
+            updates[m] = m_t
+            updates[v] = v_t
+            updates[param] = p_t
+        updates[self.i] = i_t
+
+        return updates
+
+
+class Adam_paper(object):
+
+    def __init__(self, learning_rate=0.0002, b1=0.1, b2=0.001, epsilon=1e-8, lmbda=(1-1e-8)):
+        self.learning_rate = learning_rate
+        self.b1 = b1
+        self.b2 = b2
+        self.epsilon = epsilon
+        self.lmbda = lmbda
+        self.i = theano.shared(np.float32(0.))
+        self.parameters = []
+
+    def get_updates(self, grads):
+        grads = OrderedDict(grads)
+        updates = OrderedDict()
+
+        i_t = self.i + 1.
+        fix1 = 1. - (1. - self.b1) ** i_t
+        fix2 = 1. - (1. - self.b2) ** i_t
+        lr_t = self.learning_rate * (T.sqrt(fix2) / fix1)
+
+        for param in grads.keys():
+            m = theano.shared(param.get_value() * 0.)
+            self.parameters.append(m)
+            v = theano.shared(param.get_value() * 0.)
+            self.parameters.append(v)
+
+            b1t = 1. - (1. - self.b1) * self.lmbda**(i_t - 1)
+            m_t = b1t * grads[param] + (1. - b1t) * m
+            v_t = self.b2 * T.sqr(grads[param]) + (1. - self.b2) * v
+            g_t = m_t / (T.sqrt(v_t) + self.epsilon)
+            p_t = param - (lr_t * g_t)
+
+            updates[m] = m_t
+            updates[v] = v_t
+            updates[param] = p_t
+        updates[self.i] = i_t
+
+        return updates
+
+
 class RMSProp(object):
     # Ref. Tieleman, T. and Hinton, G. (2012) - Lecture 6.5 - rmsprop, COURSERA: Neural Networks for Machine Learning
     # Sum of per-dimension gradient's l2-norm and parameters update's l2-norm

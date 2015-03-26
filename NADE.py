@@ -3,7 +3,7 @@ import theano
 import theano.tensor as T
 
 from weights_initializer import WeightsInitializer
-from momentums import DecreasingLearningRate, AdaDelta, AdaGrad, RMSProp
+from momentums import DecreasingLearningRate, AdaDelta, AdaGrad, RMSProp, Adam, Adam_paper
 
 
 class NADE(object):
@@ -60,6 +60,10 @@ class NADE(object):
             self.momentum = AdaGrad(learning_rate=learning_rate)
         elif momentum == "rmsprop":
             self.momentum = RMSProp(learning_rate=learning_rate, decay=decrease_constant)
+        elif momentum == "adam":
+            self.momentum = Adam(learning_rate=learning_rate)
+        elif momentum == "adam_paper":
+            self.momentum = Adam_paper(learning_rate=learning_rate)
 
         # The loss function
         input = T.matrix(name="input")
