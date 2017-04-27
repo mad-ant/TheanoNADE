@@ -1,7 +1,8 @@
 import numpy as np
 import theano
 import theano.tensor as T
-from theano.compat.python2x import OrderedDict
+#from theano.compat.python2x import OrderedDict
+from collections import OrderedDict
 
 
 class DecreasingLearningRate(object):
